@@ -1,19 +1,58 @@
 import os
-from telegram.ext import ApplicationBuilder, CommandHandler
+import sys
+import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from bot import start, track, list_hotels
-from scheduler import check_prices
+from apscheduler.triggers.interval import IntervalTrigger
+from telegram import Bot
+from telegram.error import TelegramError
+import requests
+from bs4 import BeautifulSoup
 
-TOKEN = os.environ["BOT_TOKEN"]
+# ----------------------------
+# Environment Variables
+# ----------------------------
+TOKEN = os.environ.get("BOT_TOKEN")
+if not TOKEN:
+    print("ERROR: BOT_TOKEN environment variable not set!")
+    sys.exit(1)
 
-app = ApplicationBuilder().token(TOKEN).build()
+bot = Bot(token=TOKEN)
 
-app.add_handler(CommandHandler("start", start))
-app.add_handler(CommandHandler("track", track))
-app.add_handler(CommandHandler("list", list_hotels))
+# ----------------------------
+# Job Functions
+# ----------------------------
+def check_hotels():
+    try:
+        # Example: replace with your real hotel scraping/check logic
+        url = "https://example.com"
+        resp = requests.get(url)
+        soup = BeautifulSoup(resp.text, "html.parser")
+        # Do your scraping here...
+        message = "Hotel prices checked!"
+        print(message)  # Logs for Koyeb dashboard
+        # Example: send message to your Telegram
+        bot.send_message(chat_id="YOUR_CHAT_ID", text=message)
+    except TelegramError as e:
+        print(f"Telegram error: {e}")
+    except Exception as e:
+        print(f"Error in job: {e}")
 
+# ----------------------------
+# Scheduler Setup
+# ----------------------------
 scheduler = AsyncIOScheduler()
-scheduler.add_job(check_prices, "interval", hours=6, args=[app])
-scheduler.start()
+# Example: run every 10 minutes
+scheduler.add_job(check_hotels, IntervalTrigger(minutes=10))
 
-app.run_polling()
+async def main():
+    scheduler.start()
+    print("Scheduler started. Bot is running...")
+    # Keep the container alive
+    while True:
+        await asyncio.sleep(60)
+
+# ----------------------------
+# Start the Bot
+# ----------------------------
+if __name__ == "__main__":
+    asyncio.run(main())
