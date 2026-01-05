@@ -3,3 +3,6 @@ apscheduler==3.11.1
 aiohttp
 requests
 beautifulsoup4
+fastapi
+uvicorn
+jinja2
