@@ -1,4 +1,1 @@
-python-telegram-bot==20.6
-requests
-beautifulsoup4
-apscheduler
+python-telegram-bot>=20.0
