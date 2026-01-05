@@ -1,21 +1,60 @@
-tracked = []
+import sqlite3
+
+DB_PATH = "hotels.db"
 
 
-def add_hotel(chat_id, url, price):
-    tracked.append({
-        "chat_id": chat_id,
-        "url": url,
-        "last_price": price,
-    })
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS hotels (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            chat_id INTEGER NOT NULL,
+            url TEXT NOT NULL,
+            last_price REAL
+        )
+    """)
+
+    conn.commit()
+    conn.close()
 
 
-def get_by_chat(chat_id):
-    return [h for h in tracked if h["chat_id"] == chat_id]
+def add_hotel(chat_id: int, url: str):
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+
+    cur.execute(
+        "INSERT INTO hotels (chat_id, url, last_price) VALUES (?, ?, NULL)",
+        (chat_id, url),
+    )
+
+    conn.commit()
+    conn.close()
 
 
-def get_all():
-    return tracked
+def remove_hotel(chat_id: int, hotel_id: int):
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+
+    cur.execute(
+        "DELETE FROM hotels WHERE id = ? AND chat_id = ?",
+        (hotel_id, chat_id),
+    )
+
+    conn.commit()
+    conn.close()
 
 
-def update_price(item, new_price):
-    item["last_price"] = new_price
+def list_hotels(chat_id: int):
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+
+    cur.execute(
+        "SELECT id, url, last_price FROM hotels WHERE chat_id = ?",
+        (chat_id,),
+    )
+
+    rows = cur.fetchall()
+    conn.close()
+    return rows
