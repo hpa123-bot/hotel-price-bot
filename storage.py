@@ -20,41 +20,24 @@ def init_db():
     conn.close()
 
 
-def add_hotel(chat_id: int, url: str):
+def add_hotel(chat_id, url):
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
-
     cur.execute(
         "INSERT INTO hotels (chat_id, url, last_price) VALUES (?, ?, NULL)",
         (chat_id, url),
     )
-
     conn.commit()
     conn.close()
 
 
-def remove_hotel(chat_id: int, hotel_id: int):
+def list_hotels(chat_id):
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
-
-    cur.execute(
-        "DELETE FROM hotels WHERE id = ? AND chat_id = ?",
-        (hotel_id, chat_id),
-    )
-
-    conn.commit()
-    conn.close()
-
-
-def list_hotels(chat_id: int):
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-
     cur.execute(
         "SELECT id, url, last_price FROM hotels WHERE chat_id = ?",
         (chat_id,),
     )
-
     rows = cur.fetchall()
     conn.close()
     return rows
