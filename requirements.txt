@@ -1,5 +1,5 @@
 python-telegram-bot==20.3
+apscheduler==3.11.1
+aiohttp
 requests
 beautifulsoup4
-apscheduler>=3.11.0
-httpx~=0.24.0

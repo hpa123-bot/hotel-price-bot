@@ -1,58 +1,40 @@
 import os
-import sys
 import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.interval import IntervalTrigger
 from telegram import Bot
-from telegram.error import TelegramError
-import requests
-from bs4 import BeautifulSoup
+from aiohttp import web
 
-# ----------------------------
-# Environment Variables
-# ----------------------------
-TOKEN = os.environ.get("BOT_TOKEN")
-if not TOKEN:
-    print("ERROR: BOT_TOKEN environment variable not set!")
-    sys.exit(1)
+# -----------------------
+# Bot Configuration
+# -----------------------
+TOKEN = os.environ["BOT_TOKEN"]  # Make sure this is set in Koyeb secrets
+CHAT_ID = os.environ.get("CHAT_ID")  # Optional: use if you send messages on start
 
 bot = Bot(token=TOKEN)
-
-# ----------------------------
-# Job Functions
-# ----------------------------
-def check_hotels():
-    try:
-        # Example: replace with your real hotel scraping/check logic
-        url = "https://example.com"
-        resp = requests.get(url)
-        soup = BeautifulSoup(resp.text, "html.parser")
-        # Do your scraping here...
-        message = "Hotel prices checked!"
-        print(message)  # Logs for Koyeb dashboard
-        # Example: send message to your Telegram
-        bot.send_message(chat_id="YOUR_CHAT_ID", text=message)
-    except TelegramError as e:
-        print(f"Telegram error: {e}")
-    except Exception as e:
-        print(f"Error in job: {e}")
-
-# ----------------------------
-# Scheduler Setup
-# ----------------------------
 scheduler = AsyncIOScheduler()
-# Example: run every 10 minutes
-scheduler.add_job(check_hotels, IntervalTrigger(minutes=10))
+scheduler.start()
+print("Scheduler started. Bot is running...")
 
-async def main():
-    scheduler.start()
-    print("Scheduler started. Bot is running...")
-    # Keep the container alive
-    while True:
-        await asyncio.sleep(60)
+# Example scheduled task
+def example_task():
+    print("Running scheduled task...")
+    # Example: send a message to your chat
+    if CHAT_ID:
+        asyncio.create_task(bot.send_message(chat_id=CHAT_ID, text="Hello from the bot!"))
 
-# ----------------------------
-# Start the Bot
-# ----------------------------
-if __name__ == "__main__":
-    asyncio.run(main())
+# Schedule every minute (adjust as needed)
+scheduler.add_job(example_task, 'interval', minutes=1)
+
+# -----------------------
+# Dummy HTTP server for Koyeb health check
+# -----------------------
+async def handle_health(request):
+    return web.Response(text="Bot is alive!")
+
+app = web.Application()
+app.add_routes([web.get("/", handle_health)])
+
+# -----------------------
+# Run bot & server concurrently
+# -----------------------
+web.run_app(app, host="0.0.0.0", port=8000)
